@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fami.js</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="nes"></canvas>
+
+  <button id="start">Start/Reset</button>
+  <button id="stop">Stop</button>
+  <button id="resume">Resume</button>
+  <button id="step">Step</button>
+  <button id="dump-pattern-table">Dump Pattern Table</button>
+  <button id="dump-nametable">Dump Nametable</button>
+  <button id="clear">Clear</button>
+
+  <label for="show-debug-logs">Show Debug Logs</label>
+  <input type="checkbox" id="show-debug-logs" checked>
+
+  <textarea id="debug"></textarea>
+
+  <script src="fami.js"></script>
+  <script>
+    const canvas = document.getElementById('nes');
+    const start = document.getElementById('start');
+    const stop = document.getElementById('stop');
+    const resume = document.getElementById('resume');
+    const step = document.getElementById('step');
+    const dumpPatternTable = document.getElementById('dump-pattern-table');
+    const dumpNametable = document.getElementById('dump-nametable');
+    const clear = document.getElementById('clear');
+    const showDebugLogs = document.getElementById('show-debug-logs');
+    const debug = document.getElementById('debug');
+
+    const nes = new NES(canvas);
+
+    start.addEventListener('click', () => {
+      clearLogs(true);
+      nes.start();
+    });
+    stop.addEventListener('click', () => {
+      nes.stop();
+      updateLogs();
+    });
+    resume.addEventListener('click', () => nes.start(false));
+    step.addEventListener('click', () => {
+      nes.step();
+      updateLogs();
+    });
+    dumpPatternTable.addEventListener('click', () => nes.ppu.dumpPatternTable());
+    dumpNametable.addEventListener('click', () => nes.ppu.dumpNametable());
+    clear.addEventListener('click', () => clearLogs());
+
+    const LOG_UPDATE_THRESHOLD = 2_000;
+    const LOG_ROLLOVER_LIMIT = 20_000;
+
+    let oldLogs = [];
+    let newLogs = [];
+    let instructionCount = 0;
+  
+    function updateLogs() {
+      debug.value = oldLogs.concat(newLogs).join('\n');
+      debug.scrollTop = debug.scrollHeight;
+    }
+
+    function clearLogs(resetInstructionCount) {
+      if (resetInstructionCount) {
+        instructionCount = 0;
+      }
+
+      oldLogs = [];
+      newLogs = [];
+
+      debug.value = '';
+      debug.scrollTop = debug.scrollHeight;
+    }
+
+    function rolloverLogs() {
+      oldLogs = oldLogs.concat(newLogs);
+      if (oldLogs.length >= LOG_ROLLOVER_LIMIT) {
+        oldLogs.splice(0, LOG_UPDATE_THRESHOLD);
+      }
+
+      newLogs = [];
+    }
+
+    nes.on('debug', (log) => {
+      if (!showDebugLogs.checked) {
+        return;
+      }
+
+      newLogs.push(instructionCount + ':' + log);
+  
+      if (newLogs.length === LOG_UPDATE_THRESHOLD) {
+        updateLogs();
+        rolloverLogs();
+      }
+
+      instructionCount++;
+    });
+
+    clearLogs(true);
+  </script>
+</body>
+</html>
