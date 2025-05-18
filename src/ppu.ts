@@ -163,7 +163,7 @@ export class PPU extends Addressable {
     imageBytes.fill(0xff);
     this.imageBytes = imageBytes;
 
-    const imageData = new ImageData(this.imageBytes, PPU.DISPLAY_WIDTH, PPU.DISPLAY_HEIGHT);
+    const imageData = new ImageData(this.imageBytes as ImageDataArray, PPU.DISPLAY_WIDTH, PPU.DISPLAY_HEIGHT);
     this.imageData = imageData;
 
     const bytes = new Uint8Array(this.actualSize);
@@ -649,7 +649,7 @@ export class PPU extends Addressable {
     const nametableEntryAddress = nametableStartAddress + nametableEntryIndex;
     const nametableEntry = this.ppuBus.read(nametableEntryAddress);
     const tileOffset = nametableEntry << 4; // nametableEntry * Tile.TILE_BYTES
-    const tileAddress = PPU.PATTERN_TABLE_0_START_ADDRESS + tileOffset; // TODO: Use this.ppuctrlBackgroundTileSelect?
+    const tileAddress = (this.ppuctrlBackgroundTileSelect ? PPU.PATTERN_TABLE_1_START_ADDRESS : PPU.PATTERN_TABLE_0_START_ADDRESS) + tileOffset;
     const palette = this.getPalette(nametableY, nametableX, PPU.BACKGROUND_PALETTE_0_ADDRESS);
     const tileY = this.visibleY % Tile.TILE_HEIGHT;
     const tileX = this.visibleX % Tile.TILE_WIDTH;
@@ -665,7 +665,12 @@ export class PPU extends Addressable {
     this.imageBytes[imageDataIndex + 2] = color.b;
   }
 
+  private lastFlushTimestamp = 0;
+
   private flush() {
+    const timestamp = Date.now();
+    // console.log(timestamp - this.lastFlushTimestamp);
+    this.lastFlushTimestamp = timestamp;
     this.ctx.putImageData(this.imageData, 0, 0);
   }
 

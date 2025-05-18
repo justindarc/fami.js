@@ -80,7 +80,7 @@ export class NES extends EventEmitter {
     this.cpuBus = cpuBus;
 
     const cartridge = new Cartridge(ppuBus, cpuBus, chr, prg);
-    cartridge.load('nestest.nes');
+    cartridge.load('smb.nes');
     this.cartridge = cartridge;
 
     const cpu = new CPU(cpuBus, ppuBus, (log: string) => this.debug(log));
@@ -89,8 +89,8 @@ export class NES extends EventEmitter {
     // const clock = new Clock(2_000, 50); // Yield every 2,000 tick(s) for 50ms
     // const clock = new Clock(10_000, 10); // Yield every 10,000 tick(s) for 10ms
     // const clock = new Clock(50_000, 5); // Yield every 50,000 tick(s) for 5ms
-    const clock = new Clock(100_000, 2.5); // Yield every 100,000 tick(s) for 2.5ms
-    // const clock = new Clock(200_000, 0); // Yield every 200,000 tick(s) for 0ms
+    // const clock = new Clock(100_000, 2.5); // Yield every 100,000 tick(s) for 2.5ms
+    const clock = new Clock(200_000, 0); // Yield every 200,000 tick(s) for 0ms
     clock.addTickCallback(() => cpu.tick(), 3); // CPU ticks every 3rd clock cycle
     clock.addTickCallback(() => ppu.tick(), 1, PPU.CLOCK_OFFSET); // PPU ticks every clock cycle
     this.clock = clock;
